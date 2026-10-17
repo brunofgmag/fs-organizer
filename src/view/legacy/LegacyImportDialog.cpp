@@ -8,6 +8,7 @@
 #include <QtWidgets/QVBoxLayout>
 
 #include "support/PathText.h"
+#include "view/panels/EmptyState.h"
 #include "view/panels/ScrollBarCap.h"
 #include "view/theme/ModernistMetrics.h"
 
@@ -88,6 +89,12 @@ LegacyImportDialog::LegacyImportDialog(LegacyImportViewModel& viewModel, QWidget
     tree_->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     layout->addWidget(tree_, 1);
 
+    nothingFound_ = new EmptyState(this);
+    nothingFound_->Retell(tr("No MSFS Addons Linker installation found"),
+                          tr("Nothing to import. FS Organizer looks for the configuration the MSFS Addons Linker "
+                             "keeps in ProgramData."));
+    layout->addWidget(nothingFound_, 1);
+
     auto* buttons = new QDialogButtonBox(this);
     import_ = buttons->addButton(tr("Import"), QDialogButtonBox::AcceptRole);
     buttons->addButton(tr("Cancel"), QDialogButtonBox::RejectRole);
@@ -138,10 +145,9 @@ void LegacyImportDialog::Fill()
         }
     }
 
-    if (tree_->topLevelItemCount() == 0)
-    {
-        LineUnder(tree_)->setText(0, tr("No MSFS Addons Linker installation was found."));
-    }
+    const bool nothingFound = tree_->topLevelItemCount() == 0;
+    tree_->setHidden(nothingFound);
+    nothingFound_->setHidden(!nothingFound);
 
     RefreshTheImportButton();
 }

@@ -1,4 +1,5 @@
 #include <QtTest/QtTest>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QTreeWidget>
 
@@ -25,6 +26,7 @@
 #include "tests/support/ButtonLookup.h"
 #include "tests/support/ScrollBarCapRule.h"
 #include "view/legacy/LegacyImportDialog.h"
+#include "view/panels/EmptyState.h"
 
 namespace
 {
@@ -37,6 +39,7 @@ namespace
         static void ALibraryAlreadyRegisteredIsShownWithoutAnythingToCheck();
         static void ALibraryWhoseRootIsGoneIsListedAndOffersNothing();
         static void AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisappearing();
+        static void NoInstallationIsSaidOutsideTheTableInsteadOfAsARowOfIt();
         static void ImportingWhatIsCheckedRegistersTheLibraryAndSaysWhatHappened();
         static void APresetOfTheOldProgramIsOfferedAndLandsInTheProfile();
         static void ANameThePresetCitesAndNoLibraryHasIsReportedInsteadOfVanishing();
@@ -179,6 +182,8 @@ void LegacyImportDialogTest::EachInstallationBecomesALineWithItsLibrariesUnderIt
     const QTreeWidget& tree = TreeOf(dialog);
 
     QCOMPARE(tree.topLevelItemCount(), 2);
+    QVERIFY(!tree.isHidden());
+    QVERIFY(dialog.findChild<EmptyState*>()->isHidden());
     QCOMPARE(tree.topLevelItem(0)->childCount(), 1);
     QCOMPARE(tree.topLevelItem(0)->child(0)->childCount(), 2);
 }
@@ -219,6 +224,19 @@ void LegacyImportDialogTest::AConfigurationThatCouldNotBeReadSaysSoInsteadOfDisa
 
     QCOMPARE(installation->childCount(), 0);
     QVERIFY(!installation->text(1).isEmpty());
+}
+
+void LegacyImportDialogTest::NoInstallationIsSaidOutsideTheTableInsteadOfAsARowOfIt()
+{
+    Fixture f;
+
+    const LegacyImportDialog dialog(f.viewModel);
+    const QLabel* headline = dialog.findChild<QLabel*>(QStringLiteral("EmptyHeadline"));
+
+    QVERIFY(TreeOf(dialog).isHidden());
+    QVERIFY(!dialog.findChild<EmptyState*>()->isHidden());
+    QCOMPARE(headline->text(), QStringLiteral("No MSFS Addons Linker installation found"));
+    QVERIFY(!ButtonSaying(dialog, QStringLiteral("Import"))->isEnabled());
 }
 
 void LegacyImportDialogTest::ImportingWhatIsCheckedRegistersTheLibraryAndSaysWhatHappened()

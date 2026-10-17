@@ -106,6 +106,19 @@ int ModernistStyle::pixelMetric(const PixelMetric metric, const QStyleOption* op
     return QProxyStyle::pixelMetric(metric, option, widget);
 }
 
+int ModernistStyle::styleHint(const StyleHint hint,
+                              const QStyleOption* option,
+                              const QWidget* widget,
+                              QStyleHintReturn* returnData) const
+{
+    if (hint == SH_DialogButtonBox_ButtonsHaveIcons)
+    {
+        return 0;
+    }
+
+    return QProxyStyle::styleHint(hint, option, widget, returnData);
+}
+
 void ModernistStyle::drawPrimitive(const PrimitiveElement element,
                                    const QStyleOption* option,
                                    QPainter* painter,
@@ -164,7 +177,7 @@ void ModernistStyle::DrawComboBox(const QStyleOptionComboBox& option, QPainter& 
     painter.setBrush(Qt::NoBrush);
     painter.drawRect(OutlineInside(painter, QRectF(option.rect)));
 
-    QStyleOption arrow = option;
+    QStyleOptionComboBox arrow = option;
     arrow.rect = subControlRect(CC_ComboBox, &option, SC_ComboBoxArrow, widget);
     drawPrimitive(PE_IndicatorArrowDown, &arrow, &painter, widget);
 }
