@@ -15,6 +15,7 @@ namespace
     constexpr int kRadioSide = 14;
     constexpr qreal kHairline = 1.5;
     constexpr qreal kFocusRing = 2.0;
+    constexpr int kMenuSeparatorInset = 5;
 
     class PainterState
     {
@@ -117,6 +118,23 @@ int ModernistStyle::styleHint(const StyleHint hint,
     }
 
     return QProxyStyle::styleHint(hint, option, widget, returnData);
+}
+
+void ModernistStyle::drawControl(const ControlElement element,
+                                 const QStyleOption* option,
+                                 QPainter* painter,
+                                 const QWidget* widget) const
+{
+    const auto* item = qstyleoption_cast<const QStyleOptionMenuItem*>(option);
+
+    if (element == CE_MenuItem && painter != nullptr && item != nullptr
+        && item->menuItemType == QStyleOptionMenuItem::Separator && item->text.isEmpty())
+    {
+        DrawMenuSeparator(*item, *painter);
+        return;
+    }
+
+    QProxyStyle::drawControl(element, option, painter, widget);
 }
 
 void ModernistStyle::drawPrimitive(const PrimitiveElement element,
@@ -253,6 +271,16 @@ void ModernistStyle::DrawBranch(const QStyleOption& option, QPainter& painter) c
     painter.setPen(Qt::NoPen);
     painter.setBrush(tones_.secondary);
     painter.drawPath(TriangleIn(option.rect, option.state.testFlag(State_Open)));
+}
+
+void ModernistStyle::DrawMenuSeparator(const QStyleOptionMenuItem& item, QPainter& painter) const
+{
+    const PainterState guard(painter);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setPen(tones_.divider);
+
+    const int y = item.rect.center().y();
+    painter.drawLine(item.rect.left() + kMenuSeparatorInset, y, item.rect.right() - kMenuSeparatorInset, y);
 }
 
 void ModernistStyle::DrawSelectionHairline(const QStyleOption& option, QPainter& painter) const

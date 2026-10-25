@@ -53,13 +53,18 @@ run_the_linux_gate() {
   ctest --preset linux-release --parallel "$(nproc)"
 }
 
-if command -v pwsh >/dev/null 2>&1; then
-  pwsh -NoProfile -ExecutionPolicy Bypass -File ./build.ps1 -Config Release -RunTests
-elif command -v powershell >/dev/null 2>&1; then
-  powershell -NoProfile -ExecutionPolicy Bypass -File ./build.ps1 -Config Release -RunTests
-else
-  run_the_linux_gate
-fi
+run_the_windows_gate() {
+  if command -v pwsh >/dev/null 2>&1; then
+    pwsh -NoProfile -ExecutionPolicy Bypass -File ./build.ps1 -Config Release -RunTests
+  else
+    powershell -NoProfile -ExecutionPolicy Bypass -File ./build.ps1 -Config Release -RunTests
+  fi
+}
+
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*) run_the_windows_gate ;;
+  *) run_the_linux_gate ;;
+esac
 
 if [ $? -ne 0 ]; then
   echo "[pre-commit] build or tests failed - aborting commit." >&2

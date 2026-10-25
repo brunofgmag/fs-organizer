@@ -1753,7 +1753,7 @@ void AddonTreePage::AddDestinationActions(QMenu& menu, const TreeNode* node)
 
     for (const std::filesystem::path& destination : profile.destinations)
     {
-        menu.addAction(tr("Always use %1").arg(AsText(destination.filename())), this,
+        menu.addAction(tr("Always use the %1 destination").arg(AsText(destination.filename())), this,
                        [this, node, destination]
                        {
                            ChooseDestination(node, destination);

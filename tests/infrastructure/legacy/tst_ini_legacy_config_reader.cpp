@@ -76,6 +76,8 @@ void IniLegacyConfigReaderTest::ATrailingSeparatorIsTrimmedButARootKeepsIts()
 
     QCOMPARE(ComparablePath(read->presetsPath), ComparablePath("c:/programdata/presets"));
     QCOMPARE(ComparablePath(read->addonPaths[0]), ComparablePath("D:/A/B"));
+    QCOMPARE(AsUtf8(read->presetsPath), std::string("c:\\programdata\\presets"));
+    QCOMPARE(AsUtf8(read->addonPaths[0]), std::string("D:\\A\\B"));
 }
 
 void IniLegacyConfigReaderTest::LinesThatAreNotKeyValueAreIgnored()

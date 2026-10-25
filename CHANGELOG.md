@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.2](https://github.com/brunofgmag/fs-organizer/compare/v1.3.1...v1.3.2) (2026-10-25)
+
+
+* name each destination in the tree menu ([#237](https://github.com/brunofgmag/fs-organizer/issues/237)) ([0f52f99](https://github.com/brunofgmag/fs-organizer/commit/0f52f9915de404e4973eb2aa5beecea2b0d158fe))
+
+
+### Bug Fixes
+
+* name each destination in the tree menu ([31dd754](https://github.com/brunofgmag/fs-organizer/commit/31dd7540d11bf0a722255bf6e152011e8d782ce6)) ([0f52f99](https://github.com/brunofgmag/fs-organizer/commit/0f52f9915de404e4973eb2aa5beecea2b0d158fe))
+
 ## [1.3.1](https://github.com/brunofgmag/fs-organizer/compare/v1.3.0...v1.3.1) (2026-10-16)
 
 

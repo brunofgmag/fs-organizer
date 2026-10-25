@@ -28,17 +28,27 @@
     return text;
 }
 
-[[nodiscard]] inline std::string ComparablePath(const std::filesystem::path& path)
+[[nodiscard]] inline std::string WithoutTrailingSeparators(std::string text)
 {
-    std::string key = LoweredForComparison(
-        WithGenericSeparators(AsUtf8(PathFromUtf8(WithGenericSeparators(AsUtf8(path))).lexically_normal())));
-
-    while (key.size() > 1 && key.back() == '/' && key[key.size() - 2] != ':')
+    while (text.size() > 1 && (text.back() == '/' || text.back() == '\\') && text[text.size() - 2] != ':')
     {
-        key.pop_back();
+        text.pop_back();
     }
 
-    return key;
+    return text;
+}
+
+[[nodiscard]] inline std::filesystem::path PathWithoutTrailingSeparator(const std::filesystem::path& path)
+{
+    return PathFromUtf8(WithoutTrailingSeparators(AsUtf8(path)));
+}
+
+[[nodiscard]] inline std::string ComparablePath(const std::filesystem::path& path)
+{
+    const std::string key = LoweredForComparison(
+        WithGenericSeparators(AsUtf8(PathFromUtf8(WithGenericSeparators(AsUtf8(path))).lexically_normal())));
+
+    return WithoutTrailingSeparators(key);
 }
 
 [[nodiscard]] inline std::filesystem::path VolumeOf(const std::filesystem::path& path)
