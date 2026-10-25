@@ -760,8 +760,8 @@
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1273"/>
-        <source>Always use %1</source>
-        <translation>Usar sempre %1</translation>
+        <source>Always use the %1 destination</source>
+        <translation>Usar sempre o destino %1</translation>
     </message>
     <message>
         <location filename="../src/view/library/AddonTreePage.cpp" line="1283"/>

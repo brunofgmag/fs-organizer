@@ -29,21 +29,10 @@ namespace
         return std::nullopt;
     }
 
-    QString TrimmedOfTrailingSeparators(QString value)
-    {
-        while (value.size() > 1 && (value.endsWith(QLatin1Char('\\')) || value.endsWith(QLatin1Char('/')))
-               && !value.endsWith(QLatin1String(":\\")) && !value.endsWith(QLatin1String(":/")))
-        {
-            value.chop(1);
-        }
-
-        return value;
-    }
-
     void ApplyLine(LegacyInstallation& installation, const QString& line)
     {
         const QString key = line.section(QLatin1Char('='), 0, 0).trimmed();
-        const QString value = TrimmedOfTrailingSeparators(line.section(QLatin1Char('='), 1).trimmed());
+        const QString value = line.section(QLatin1Char('='), 1).trimmed();
 
         if (value.isEmpty())
         {

@@ -6,6 +6,7 @@
 #include "view/theme/ModernistTones.h"
 
 class QStyleOptionComboBox;
+class QStyleOptionMenuItem;
 
 class ModernistStyle final : public QProxyStyle
 {
@@ -20,6 +21,11 @@ public:
                                 const QStyleOption* option,
                                 const QWidget* widget,
                                 QStyleHintReturn* returnData) const override;
+
+    void drawControl(ControlElement element,
+                     const QStyleOption* option,
+                     QPainter* painter,
+                     const QWidget* widget) const override;
 
     void drawPrimitive(PrimitiveElement element,
                        const QStyleOption* option,
@@ -39,6 +45,8 @@ private:
     void DrawRadioButton(const QStyleOption& option, QPainter& painter) const;
 
     void DrawBranch(const QStyleOption& option, QPainter& painter) const;
+
+    void DrawMenuSeparator(const QStyleOptionMenuItem& item, QPainter& painter) const;
 
     void DrawSelectionHairline(const QStyleOption& option, QPainter& painter) const;
 

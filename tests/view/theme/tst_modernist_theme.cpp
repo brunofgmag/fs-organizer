@@ -11,6 +11,7 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QProxyStyle>
 #include <QtWidgets/QStyleFactory>
@@ -51,6 +52,8 @@ namespace
         static void ADialogWithNoWindowBehindItFallsBackToTheScreen();
         static void ContentThatCanShrinkIsCappedWithoutLettingGoOfTheLayoutMinimum();
         static void ADialogButtonCarriesNoIconEvenWhenTheDesktopAsksForOne();
+        static void AMenuSeparatorTakesTheDividerToneInBothSchemes_data();
+        static void AMenuSeparatorTakesTheDividerToneInBothSchemes();
     };
 
     class ADesktopThatWantsIconsOnDialogButtons final : public QProxyStyle
@@ -513,6 +516,37 @@ void ModernistThemeTest::ADialogButtonCarriesNoIconEvenWhenTheDesktopAsksForOne(
     style.setBaseStyle(new ADesktopThatWantsIconsOnDialogButtons);
 
     QVERIFY(CancelIconUnder(style).isNull());
+}
+
+void ModernistThemeTest::AMenuSeparatorTakesTheDividerToneInBothSchemes_data()
+{
+    QTest::addColumn<Qt::ColorScheme>("scheme");
+    QTest::newRow("dark") << Qt::ColorScheme::Dark;
+    QTest::newRow("light") << Qt::ColorScheme::Light;
+}
+
+void ModernistThemeTest::AMenuSeparatorTakesTheDividerToneInBothSchemes()
+{
+    QFETCH(Qt::ColorScheme, scheme);
+
+    QApplication::setStyle(new ModernistStyle(scheme));
+    QApplication::setPalette(ModernistPalette(scheme));
+    qApp->setStyleSheet(ModernistStyleSheet(scheme));
+
+    QMenu menu;
+    menu.addAction(QStringLiteral("Above"));
+    QAction* separator = menu.addSeparator();
+    menu.addAction(QStringLiteral("Below"));
+    menu.ensurePolished();
+    menu.resize(menu.sizeHint());
+
+    const QImage image = menu.grab().toImage();
+    const QRect row = menu.actionGeometry(separator);
+    const QColor line = image.pixelColor(row.center());
+    const QColor ground = image.pixelColor(row.left() + 1, row.center().y());
+
+    QVERIFY(line != ground);
+    QCOMPARE(line, ModernistPalette(scheme).color(QPalette::Mid));
 }
 
 QTEST_MAIN(ModernistThemeTest)

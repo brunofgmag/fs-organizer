@@ -25,6 +25,8 @@ namespace
         static void TwoSpellingsOfAnAccentedNameShareAKey();
         static void BytesThatAreNotUtf8AreCarriedThrough();
         static void ANameOutsideTheHostCodePageStillBecomesUtf8();
+        static void ATrailingSeparatorIsDroppedWhicheverSeparatorWroteIt();
+        static void ARootKeepsItsSeparatorWhenTheTrailingOnesAreDropped();
     };
 }
 
@@ -164,6 +166,33 @@ void PathUtilsTest::NothingIsInsideARootThatWasNeverNamed()
     QVERIFY(!PathIsInside("D:/Library/Aircrafts/aerosoft-crj", {}));
     QVERIFY(!PathIsInside({}, "D:/Library"));
     QVERIFY(PathIsInside({}, {}));
+}
+
+void PathUtilsTest::ATrailingSeparatorIsDroppedWhicheverSeparatorWroteIt()
+{
+    const std::filesystem::path community = "/home/pilot/Games/Flight Simulator 2024/Community";
+
+    QCOMPARE(PathWithoutTrailingSeparator("/home/pilot/Games/Flight Simulator 2024/Community/"), community);
+    QCOMPARE(PathWithoutTrailingSeparator("/home/pilot/Games/Flight Simulator 2024/Community///"), community);
+    QCOMPARE(PathWithoutTrailingSeparator("/home/pilot/Games/Flight Simulator 2024/Community"), community);
+    QCOMPARE(PathWithoutTrailingSeparator("/home/pilot/Games/Flight Simulator 2024/Community/").filename(),
+             std::filesystem::path("Community"));
+    QCOMPARE(PathWithoutTrailingSeparator(PathFromUtf8(R"(D:\MSFS 2024\Community\)")),
+             PathFromUtf8(R"(D:\MSFS 2024\Community)"));
+    QCOMPARE(PathWithoutTrailingSeparator(PathFromUtf8("D:/MSFS 2024/Community/")),
+             PathFromUtf8("D:/MSFS 2024/Community"));
+    QCOMPARE(PathWithoutTrailingSeparator(PathFromUtf8("/home/pilot/\xC5\x81odz/")),
+             PathFromUtf8("/home/pilot/\xC5\x81odz"));
+    QVERIFY(PathWithoutTrailingSeparator({}).empty());
+}
+
+void PathUtilsTest::ARootKeepsItsSeparatorWhenTheTrailingOnesAreDropped()
+{
+    QCOMPARE(PathWithoutTrailingSeparator("/"), std::filesystem::path("/"));
+    QCOMPARE(PathWithoutTrailingSeparator("//"), std::filesystem::path("/"));
+    QCOMPARE(PathWithoutTrailingSeparator(PathFromUtf8("C:/")), PathFromUtf8("C:/"));
+    QCOMPARE(PathWithoutTrailingSeparator(PathFromUtf8(R"(C:\)")), PathFromUtf8(R"(C:\)"));
+    QCOMPARE(PathWithoutTrailingSeparator(PathFromUtf8("C://")), PathFromUtf8("C:/"));
 }
 
 QTEST_APPLESS_MAIN(PathUtilsTest)

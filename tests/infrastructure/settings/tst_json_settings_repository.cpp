@@ -26,6 +26,7 @@ namespace
         static void AnAbsentFileReadsAsSettingsWithNoProfileYet();
         static void TheLinkTypeAndTheHashCheckSurviveTheRoundTrip();
         static void AFileWrittenBeforeTheseKeysExistedReadsAsJunctionWithoutTheHashCheck();
+        static void DestinationsWrittenWithATrailingSeparatorStillNameTheirFolder();
         static void TheUpdateModeAndTheLanguageSurviveTheRoundTrip();
         static void TheOriginOfAnAddonThatCameFromAnotherProgramSurvivesTheRoundTrip();
         static void AProfileWrittenBeforeExternalOriginsExistedReadsWithNone();
@@ -227,6 +228,29 @@ void JsonSettingsRepositoryTest::AFileWrittenBeforeTheseKeysExistedReadsAsJuncti
     QCOMPARE(read->verification, Verification::ByStructure);
     QCOMPARE(read->updateMode, UpdateMode::Notify);
     QVERIFY(read->language.empty());
+}
+
+void JsonSettingsRepositoryTest::DestinationsWrittenWithATrailingSeparatorStillNameTheirFolder()
+{
+    const Storage storage;
+
+    std::filesystem::create_directories(storage.File().parent_path());
+    std::ofstream(storage.File(), std::ios::binary)
+        << R"({"activeProfileId":"msfs2024","profiles":[{"id":"msfs2024","variant":"MSFS2024",)"
+           R"("destinations":["/home/pilot/Jogos/Flight Simulator 2024/Community/",)"
+           R"("/home/pilot/Jogos/Flight Simulator 2024/Community2024/"],)"
+           R"("defaultDestination":"/home/pilot/Jogos/Flight Simulator 2024/Community2024/"}]})";
+
+    const std::optional<AppSettings> read = JsonSettingsRepository(storage.File()).Load();
+
+    QVERIFY(read.has_value());
+    QCOMPARE(read->profiles.size(), std::size_t{1});
+
+    const SimulatorProfile& profile = read->profiles.front();
+    QCOMPARE(profile.destinations.size(), std::size_t{2});
+    QCOMPARE(profile.destinations[0].filename(), std::filesystem::path("Community"));
+    QCOMPARE(profile.destinations[1].filename(), std::filesystem::path("Community2024"));
+    QCOMPARE(profile.defaultDestination.filename(), std::filesystem::path("Community2024"));
 }
 
 void JsonSettingsRepositoryTest::TheUpdateModeAndTheLanguageSurviveTheRoundTrip()
