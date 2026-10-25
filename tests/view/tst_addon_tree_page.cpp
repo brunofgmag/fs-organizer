@@ -118,6 +118,7 @@ namespace
         static void ABrokenAddonThatNeverStrayedCanBeRelinkedFromThePanel();
         static void AHealthyEnabledAddonLeavesTheRelinkButtonOff();
         static void TheMenuOffersToRelinkABrokenAddonThatNeverStrayed();
+        static void TheMenuNamesEachDestinationItOffersToAlwaysUse();
         static void ThePanelFollowsAToggleOfTheSelectedAddon();
         static void TheRelinkButtonGoesOffWhenTheSelectedAddonIsRelinked();
         static void ARefreshThatChangesNothingLeavesThePageAlone();
@@ -2121,6 +2122,18 @@ void AddonTreePageTest::TheMenuOffersToRelinkABrokenAddonThatNeverStrayed()
 
     QVERIFY(OfferedByTheMenuOn(screen, kChosen).contains(kRelink));
     QVERIFY(!OfferedByTheMenuOn(screen, kCompanion).contains(kRelink));
+}
+
+void AddonTreePageTest::TheMenuNamesEachDestinationItOffersToAlwaysUse()
+{
+    ApplyModernistTheme(*qApp);
+    Fixture f(ProfileWithTwoDestinations());
+    const Screen screen(f);
+
+    const QStringList offered = OfferedByTheMenuOn(screen, kChosen);
+
+    QVERIFY(offered.contains(QStringLiteral("Always use the Community destination")));
+    QVERIFY(offered.contains(QStringLiteral("Always use the Community2024 destination")));
 }
 
 namespace
