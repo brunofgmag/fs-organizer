@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.3](https://github.com/brunofgmag/fs-organizer/compare/v1.3.2...v1.3.3) (2026-11-02)
+
+
+* ship a libarchive that reads every RAR5 archive in the AppImage ([#240](https://github.com/brunofgmag/fs-organizer/issues/240)) ([297b51e](https://github.com/brunofgmag/fs-organizer/commit/297b51e77c91d43d628d88e586f6fc11ee5ba457))
+
+
+### Bug Fixes
+
+* ship a libarchive that reads every RAR5 archive in the AppImage ([e87ebae](https://github.com/brunofgmag/fs-organizer/commit/e87ebae3ab2a88ea50fbcda393b65d4b8c384f7b)) ([297b51e](https://github.com/brunofgmag/fs-organizer/commit/297b51e77c91d43d628d88e586f6fc11ee5ba457))
+
 ## [1.3.2](https://github.com/brunofgmag/fs-organizer/compare/v1.3.1...v1.3.2) (2026-10-25)
 
 
