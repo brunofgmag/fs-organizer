@@ -13,6 +13,8 @@ linuxdeploy_sha="4648f278ab3ef31f819e67c30d50f462640e5365a77637d7e6f2ad9fd0b4522
 qt_plugin_url="https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-alpha-20250213-1/linuxdeploy-plugin-qt-x86_64.AppImage"
 qt_plugin_sha="15106be885c1c48a021198e7e1e9a48ce9d02a86dd0a1848f00bdbf3c1c92724"
 
+libarchive_floor="3.8.11"
+
 tools_dir="${FSORG_TOOLS_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/fs-organizer/linuxdeploy}"
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
@@ -29,6 +31,15 @@ fetch() {
 
 library_path() {
   ldconfig -p | awk -v name="$1" '$1 == name && !found { print $NF; found = 1 }'
+}
+
+refuse_an_old_libarchive() {
+  local bundled
+  bundled="$(grep --text --only-matching --extended-regexp 'libarchive [0-9]+\.[0-9]+\.[0-9]+' "$1" | cut -d' ' -f2 | sort -V | tail -1)"
+  if ! printf '%s\n%s\n' "$libarchive_floor" "$bundled" | sort -V --check=quiet; then
+    echo "libarchive $bundled reads RAR5 archives wrong, the AppImage needs $libarchive_floor or newer: run tools/build-libarchive.sh" >&2
+    exit 1
+  fi
 }
 
 fetch "$linuxdeploy_url" "$linuxdeploy_sha"
@@ -76,6 +87,8 @@ cp "$qt_root/plugins/platformthemes/libqxdgdesktopportal.so" "$plugins/platformt
     "${ssl_libraries[@]}" \
     --plugin qt
 )
+
+refuse_an_old_libarchive "$app_dir/usr/lib/libarchive.so.13"
 
 install -m 644 "$root/assets/linux/apprun-hook.sh" "$app_dir/apprun-hooks/linuxdeploy-plugin-qt-hook.sh"
 

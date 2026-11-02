@@ -189,7 +189,12 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libfontconfig1-dev libdbus-1-dev libegl1 libarchive-dev libssl-dev libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1
+          sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libfontconfig1-dev libdbus-1-dev libegl1 libssl-dev zlib1g-dev libbz2-dev liblzma-dev liblz4-dev libzstd-dev libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1
+
+      - name: Build libarchive
+        run: |
+          sudo tools/build-libarchive.sh /usr/local
+          sudo ldconfig
 
       - name: Install Qt
         uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4.3.1
